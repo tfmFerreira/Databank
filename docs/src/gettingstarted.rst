@@ -38,7 +38,7 @@ simulation. The content of README.yaml files is described in :ref:`Simulation me
 
 Examples on analyses over FAIRMD Lipids can be found from the `template
 <https://github.com/NMRLipids/databank-template/blob/main/scripts/template.ipynb>`_ and
-`codes used to analyze the results for the FAIRMD Lipids manuscript
+`codes used to analyze the results for the NMRlipids manuscript
 <https://github.com/NMRLipids/DataBankManuscript/tree/main/scripts>`_.
 
 
