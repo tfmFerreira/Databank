@@ -12,8 +12,9 @@ you need to create a new one by adding a folder :file:`membrane/YOURMOL/` inside
 repository, `BilayerData <https://github.com/NMRlipids/BilayerData>`_, you are adding
 into :file:`Molecules/membrane` folder.
 
-The folder should contain at least two files: metadata file :file:`metadata.yaml` and
-mapping file :file:`yourmol-forcefieldname-mapping.yaml` (this name is arbitrary, but
+The folder should contain at least two files: metadata file :file:`metadata.yaml`
+(see :ref:`molmetadata_schema`)
+and mapping file :file:`yourmol-forcefieldname-mapping.yaml` (this name is arbitrary, but
 you should make it clear).
 
 .. code-block:: console
@@ -33,7 +34,8 @@ Metadata file creation
 ~~~~~~~~~~~~~~~~~~~~~~
 
 Please provide metadata about the molecule in a :file:`metadata.yaml` in the same
-subfolder of :file:`Molecules/membrane/YOURMOLECULE`. You can find the template in
+subfolder of :file:`Molecules/membrane/YOURMOLECULE`. You can find
+:ref:`the metadata template <molmetadata_schema>` in
 :file:`SchemaValidation/Schema/metadata_template.yaml` inside the package directory.
 
 The recommended workflow is to start from the `InChI
@@ -69,3 +71,4 @@ The mapping file should contain all the atoms of the molecules.
 
 Specific cases:
 - TODO: mapping for UA
+

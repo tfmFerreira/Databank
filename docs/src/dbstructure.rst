@@ -164,7 +164,15 @@ Molecule record
 
 Molecule metadata
 ~~~~~~~~~~~~~~~~~
-TODO: write the block
+Molecular metadata is stored in :file:`metadata.yaml` file, and its structure
+is described in :ref:`molmetadata_schema`.
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   ../schemas/molecule_metadata.rst
+
 
 Mapping files
 ~~~~~~~~~~~~~
