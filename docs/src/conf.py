@@ -29,7 +29,7 @@ import fairmd.lipids as fmdl
 # Directory containing this conf.py
 here = os.path.dirname(__file__)
 # Scripts directory
-repo_root = os.path.abspath(os.path.join(here, "..", "..", ".."))
+repo_root = os.path.abspath(os.path.join(here, "..", ".."))
 
 # Add to path:
 sys.path.insert(0, repo_root)
