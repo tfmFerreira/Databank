@@ -256,11 +256,11 @@ def find_pairs(experiments: list[Experiment], simulations: list[SearchSystem]):
                     ) and (exp_total_lipid_concentration / sim_total_lipid_concentration < 1 + LIP_CONC_REL_THRESHOLD):
                         switch = 1
                 elif (
-                        (type(exp_total_lipid_concentration) is str) and
-                        (type(sim_total_lipid_concentration) is str) and
-                        (exp_total_lipid_concentration == sim_total_lipid_concentration)
+                    (type(exp_total_lipid_concentration) is str)
+                    and (type(sim_total_lipid_concentration) is str)
+                    and (exp_total_lipid_concentration == sim_total_lipid_concentration)
                 ):
-                        switch = 1
+                    switch = 1
 
                 if switch:
                     # check temperature +/- 2 degrees
