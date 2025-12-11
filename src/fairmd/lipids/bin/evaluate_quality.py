@@ -172,11 +172,8 @@ def evaluate_quality():
                             with open(filepath) as json_file:
                                 exp_ff_data = json.load(json_file)
 
-            sim_ff_data = simulation.ff_data
-
-            if len(exp_ff_path) > 0 and len(sim_ff_data) > 0:
-                ffq_scf = qq.get_ffq_scaling(sim_ff_data, exp_ff_data)
-                results_ff[exp_ff_path] = ffq_scf
+            if len(exp_ff_path) > 0 and len(simulation.ff_data) > 0:
+                results_ff[exp_ff_path] = qq.get_ffq_scaling(simulation.ff_data, exp_ff_data)
         # end cycle over FF experiments
 
         # TODO: handle multiple FF experiments better
