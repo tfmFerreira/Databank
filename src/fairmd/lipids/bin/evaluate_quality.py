@@ -56,10 +56,8 @@ def evaluate_quality():
 
             for path in simulation.system["EXPERIMENT"]["ORDERPARAMETER"][lipid1]:
                 print(
-                    f"Evaluating {lipid1} lipid using experimental data from{FMDL_EXP_PATH}/OrderParameters/{path}",
+                    f"Evaluating {lipid1} lipid using experimental data from {FMDL_EXP_PATH}/OrderParameters/{path}",
                 )
-
-                print(path)
                 OP_qual_data = {}
                 # get readme file of the experiment
                 exp_fpath = os.path.join(FMDL_EXP_PATH, "OrderParameters", path)

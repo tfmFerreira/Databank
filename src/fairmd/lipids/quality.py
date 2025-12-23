@@ -8,6 +8,7 @@ import decimal as dc
 import json
 import os
 import re
+from typing import Optional, Tuple
 
 import numpy as np
 import scipy.signal
@@ -291,10 +292,15 @@ def systemQuality(system_fragment_qualities, simulation):
     return system_quality
 
 
-def calc_k_e(SimExpData):
+def calc_k_e(SimExpData: list) -> float:
     """Scaling factor as defined by Kučerka et al. 2008b,
+
     doi:10.1529/biophysj.107.122465
     """
+
+    if not SimExpData:
+        return -1
+
     sum1 = 0
     sum2 = 0
 
@@ -303,13 +309,10 @@ def calc_k_e(SimExpData):
         deltaF_e = data[2]
         F_s = data[3]
 
-        sum1 = sum1 + np.abs(F_s) * np.abs(F_e) / (deltaF_e**2)
-        sum2 = sum2 + np.abs(F_e) ** 2 / deltaF_e**2
-        k_e = sum1 / sum2
+        sum1 += np.abs(F_s) * np.abs(F_e) / (deltaF_e**2)
+        sum2 += np.abs(F_e) ** 2 / deltaF_e**2
 
-    if len(SimExpData) > 0:
-        return k_e
-    return ""
+    return sum1 / sum2
 
 
 def FormFactorMinFromData(FormFactor):
@@ -337,13 +340,17 @@ def FormFactorMinFromData(FormFactor):
     return minX
 
 
-def get_ffq_scaling(ffd_sim, ffd_exp):
+def get_ffq_scaling(ffd_sim: list, ffd_exp: list) -> Optional[Tuple[float, float]]:
     """Calculate form factor quality and plot scaling factor for a simulation-experiment pair.
+
+    :param ffd_sim: Simulation FF data (float 2D list)
+    :param ffd_exp: Experiment FF data (float 2D list)
 
     Quality calculation is performed as defined by Kučerka et al. 2010, doi:10.1007/s00232-010-9254-5
     """
     # SAMULI: This creates a array containing experiments and simualtions with
     # the overlapping x-axis values
+    # TODO: this is NOT HOW IT SHOULD BE DONE. interp1d MUST BE USED
     sim_exp_data = []
     for sim_vals in ffd_sim:
         for exp_vals in ffd_exp:
@@ -358,7 +365,7 @@ def get_ffq_scaling(ffd_sim, ffd_exp):
     sim_min = FormFactorMinFromData(ffd_sim)
     exp_min = FormFactorMinFromData(ffd_exp)
 
-    ffq = np.abs(sim_min[0] - exp_min[0]) * 100
+    ffq: float = np.abs(sim_min[0] - exp_min[0]) * 100
 
     print(sim_min, exp_min, ffq)
 
