@@ -26,10 +26,10 @@ from fairmd.lipids.auxiliary.jsonEncoders import CompactJSONEncoder
 
 
 def evaluate_quality():
-    simulations = qq.loadSimulations()
+    simulations = qq.load_simulation_qe()
 
-    EvaluatedOPs = 0
-    EvaluatedFFs = 0
+    evaluated_op_counter = 0
+    evaluated_ff_counter = 0
 
     for simulation in simulations:
         # save OP quality and FF quality here
@@ -54,13 +54,10 @@ def evaluate_quality():
             fragment_qual_dict = {}
             data_dict = {}
 
-            for doi, path in simulation.system["EXPERIMENT"]["ORDERPARAMETER"][lipid1].items():
+            for path in simulation.system["EXPERIMENT"]["ORDERPARAMETER"][lipid1]:
                 print(
-                    f"Evaluating {lipid1} lipid using experimental data from"
-                    f"{doi} in {FMDL_EXP_PATH}/OrderParameters/{path}",
+                    f"Evaluating {lipid1} lipid using experimental data from {FMDL_EXP_PATH}/OrderParameters/{path}",
                 )
-
-                print(doi)
                 OP_qual_data = {}
                 # get readme file of the experiment
                 exp_fpath = os.path.join(FMDL_EXP_PATH, "OrderParameters", path)
@@ -85,8 +82,8 @@ def evaluate_quality():
 
                 exp_error = 0.02
 
-                for key in OP_data_lipid:
-                    OP_array = OP_data_lipid[key].copy()
+                for key, op_array_ in OP_data_lipid.items():
+                    OP_array = op_array_.copy()
                     try:
                         OP_exp = exp_op_data[key][0][0]
                     except KeyError:
@@ -104,11 +101,11 @@ def evaluate_quality():
                     OP_qual_data[key] = OP_array
 
                 # save qualities of simulation-vs-experiment into a dictionary
-                data_dict[doi] = OP_qual_data
+                data_dict[path] = OP_qual_data
 
                 # calculate quality for molecule fragments headgroup, sn-1, sn-2
                 fragments = qq.get_fragments(simulation.system.content[lipid1].mapping_dict)
-                fragment_qual_dict[doi] = qq.fragmentQuality(fragments, exp_op_data, OP_data_lipid)
+                fragment_qual_dict[path] = qq.fragmentQuality(fragments, exp_op_data, OP_data_lipid)
 
             try:
                 fragment_quality_output = qq.fragmentQualityAvg(lipid1, fragment_qual_dict, fragments)
@@ -156,37 +153,47 @@ def evaluate_quality():
             with open(outfile2, "w") as f:
                 json.dump(system_qual_output, f)
             print("Order parameter quality evaluated for " + simulation.idx_path)
-            EvaluatedOPs += 1
+            evaluated_op_counter += 1
             print()
 
         ###############################################################################
         # Form factor quality
+        results_ff = {}
+        for exp_ff_path in simulation.system["EXPERIMENT"]["FORMFACTOR"]:
+            exp_ff_data = {}
+            if len(exp_ff_path) > 0:
+                exp_ff_path_full = os.path.join(FMDL_EXP_PATH, "FormFactors", exp_ff_path)
+                for _, _, files in os.walk(exp_ff_path_full):
+                    for filename in files:
+                        filepath = os.path.join(exp_ff_path_full, filename)
+                        if filename.endswith(".json"):
+                            with open(filepath) as json_file:
+                                exp_ff_data = json.load(json_file)
 
-        expFFpath = simulation.system["EXPERIMENT"]["FORMFACTOR"]
-        expFFdata = {}
-        if len(expFFpath) > 0:
-            expFFpath_full = os.path.join(FMDL_EXP_PATH, "FormFactors", expFFpath)
-            for _, _, files in os.walk(expFFpath_full):
-                for filename in files:
-                    filepath = os.path.join(expFFpath_full, filename)
-                    if filename.endswith(".json"):
-                        with open(filepath) as json_file:
-                            expFFdata = json.load(json_file)
+            if len(exp_ff_path) > 0 and len(simulation.ff_data) > 0:
+                results_ff[exp_ff_path] = qq.get_ffq_scaling(simulation.ff_data, exp_ff_data)
+        # end cycle over FF experiments
 
-        simFFdata = simulation.ff_data
+        # TODO: handle multiple FF experiments better
+        # currently, just pick the best one
+        best_ep = None
+        for exp_path, ffq_scf in results_ff.items():
+            if ffq_scf is None:
+                continue
+            if best_ep is None or ffq_scf[0] < results_ff[best_ep][0]:
+                best_ep = exp_path
+        if best_ep is not None:
+            print(f"Form factor quality for experiment data from {best_ep}:")
+            print("Distance =", results_ff[best_ep][0], "; scaling factor =", results_ff[best_ep][1])
 
-        if len(expFFpath) > 0 and len(simFFdata) > 0:
-            ffQuality = qq.formfactorQuality(simFFdata, expFFdata)
+            print("Form factor quality evaluated for ", DATAdir)
             outfile3 = os.path.join(DATAdir, "FormFactorQuality.json")
             with open(outfile3, "w") as f:
-                json.dump(ffQuality, f)
-            EvaluatedFFs += 1
-            print("Form factor quality evaluated for ", DATAdir)
-        else:
-            ffQuality = 0
+                json.dump(results_ff[best_ep], f)
+            evaluated_ff_counter += 1
 
-    print("The number of systems with evaluated order parameters:", EvaluatedOPs)
-    print("The number of systems with evaluated form factors:", EvaluatedFFs)
+    print("The number of systems with evaluated order parameters:", evaluated_op_counter)
+    print("The number of systems with evaluated form factors:", evaluated_ff_counter)
 
 
 if __name__ == "__main__":

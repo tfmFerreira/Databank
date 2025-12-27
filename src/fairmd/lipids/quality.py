@@ -8,6 +8,7 @@ import decimal as dc
 import json
 import os
 import re
+from typing import Optional, Tuple
 
 import numpy as np
 import scipy.signal
@@ -291,10 +292,15 @@ def systemQuality(system_fragment_qualities, simulation):
     return system_quality
 
 
-def calc_k_e(SimExpData):
+def calc_k_e(SimExpData: list) -> float:
     """Scaling factor as defined by Kučerka et al. 2008b,
+
     doi:10.1529/biophysj.107.122465
     """
+
+    if not SimExpData:
+        return -1
+
     sum1 = 0
     sum2 = 0
 
@@ -303,16 +309,14 @@ def calc_k_e(SimExpData):
         deltaF_e = data[2]
         F_s = data[3]
 
-        sum1 = sum1 + np.abs(F_s) * np.abs(F_e) / (deltaF_e**2)
-        sum2 = sum2 + np.abs(F_e) ** 2 / deltaF_e**2
-        k_e = sum1 / sum2
+        sum1 += np.abs(F_s) * np.abs(F_e) / (deltaF_e**2)
+        sum2 += np.abs(F_e) ** 2 / deltaF_e**2
 
-    if len(SimExpData) > 0:
-        return k_e
-    return ""
+    return sum1 / sum2
 
 
 def FormFactorMinFromData(FormFactor):
+    """Find the position of first minimum in form factor data."""
     FFtmp = []
     for i in FormFactor:
         FFtmp.append(-i[1])
@@ -336,40 +340,43 @@ def FormFactorMinFromData(FormFactor):
     return minX
 
 
-def formfactorQuality(simFFdata, expFFdata):
-    """Calculate form factor quality for a simulation as defined by
-    Kučerka et al. 2010, doi:10.1007/s00232-010-9254-5
+def get_ffq_scaling(ffd_sim: list, ffd_exp: list) -> Optional[Tuple[float, float]]:
+    """Calculate form factor quality and plot scaling factor for a simulation-experiment pair.
+
+    :param ffd_sim: Simulation FF data (float 2D list)
+    :param ffd_exp: Experiment FF data (float 2D list)
+
+    Quality calculation is performed as defined by Kučerka et al. 2010, doi:10.1007/s00232-010-9254-5
     """
     # SAMULI: This creates a array containing experiments and simualtions with
     # the overlapping x-axis values
-    SimExpData = []
-    for SimValues in simFFdata:
-        for ExpValues in expFFdata:
-            if np.abs(SimValues[0] - ExpValues[0]) < 0.0005:  # and ExpValues[0] < 0.41:
-                SimExpData.append(
-                    [ExpValues[0], ExpValues[1], ExpValues[2], SimValues[1]],
+    # TODO: this is NOT HOW IT SHOULD BE DONE. interp1d MUST BE USED
+    sim_exp_data = []
+    for sim_vals in ffd_sim:
+        for exp_vals in ffd_exp:
+            if np.abs(sim_vals[0] - exp_vals[0]) < 0.0005:  # and ExpValues[0] < 0.41:
+                sim_exp_data.append(
+                    [exp_vals[0], exp_vals[1], exp_vals[2], sim_vals[1]],
                 )
 
     # Calculates the scaling factor for plotting
-    k_e = calc_k_e(SimExpData)
+    scf = calc_k_e(sim_exp_data)
 
-    SimMin = FormFactorMinFromData(simFFdata)
-    ExpMin = FormFactorMinFromData(expFFdata)
+    sim_min = FormFactorMinFromData(ffd_sim)
+    exp_min = FormFactorMinFromData(ffd_exp)
 
-    SQsum = (SimMin[0] - ExpMin[0]) ** 2
-    khi2 = np.sqrt(SQsum) * 100
-    N = len(SimExpData)
+    ffq: float = np.abs(sim_min[0] - exp_min[0]) * 100
 
-    print(SimMin, ExpMin, khi2)
+    print(sim_min, exp_min, ffq)
 
-    if N > 0:
-        return khi2, k_e
-    return ""
+    return (ffq, scf) if len(sim_exp_data) > 0 else None
 
 
 def formfactorQualitySIMtoEXP(simFFdata, expFFdata):
-    """Calculate form factor quality for a simulation as defined by
-    Kučerka et al. 2010, doi:10.1007/s00232-010-9254-5
+    """
+    Calculate form factor quality for a simulation.
+
+    Quality as defined by Kučerka et al. 2010, doi:10.1007/s00232-010-9254-5
     """
     # SAMULI: This creates a array containing experiments and simualtions with
     # the overlapping x-axis values
@@ -399,52 +406,51 @@ def formfactorQualitySIMtoEXP(simFFdata, expFFdata):
     return ""
 
 
-def loadSimulations() -> list[QualSimulation]:
+def load_simulation_qe() -> list[QualSimulation]:
+    """Load simulations for quality evaluation."""
     systems = initialize_databank()
 
     simulations = []
     for system in systems:
-        try:
-            experiments = system["EXPERIMENT"]
-        except KeyError:
+        if "EXPERIMENT" not in system:
+            print("The simulation does not have experimental field. Run fmdl_match_experiments to fix it.")
             continue
-        else:
-            if any(experiments.values()):  # if experiments is not empty
-                simOPdata = {}  # order parameter files for each type of lipid
-                for lipMol in system["COMPOSITION"]:
-                    if lipMol not in lipids_set:
-                        continue
-                    filename2 = os.path.join(
-                        FMDL_SIMU_PATH,
-                        system["path"],
-                        lipMol + "OrderParameters.json",
-                    )
-                    OPdata = {}
-                    try:
-                        with open(filename2) as json_file:
-                            OPdata = json.load(json_file)
-                    except FileNotFoundError:
-                        # OP data for this lipid is missed
-                        pass
-                    simOPdata[lipMol] = OPdata
-
-                simFFdata = {}  # form factor data
+        experiments = system["EXPERIMENT"]
+        if any(experiments.values()):  # if experiments is not empty
+            sim_op_data = {}  # order parameter files for each type of lipid
+            for lip_mol in system["COMPOSITION"]:
+                if lip_mol not in lipids_set:
+                    continue
                 filename2 = os.path.join(
                     FMDL_SIMU_PATH,
                     system["path"],
-                    "FormFactor.json",
+                    lip_mol + "OrderParameters.json",
                 )
+                op_data = {}
                 try:
                     with open(filename2) as json_file:
-                        simFFdata = json.load(json_file)
+                        op_data = json.load(json_file)
                 except FileNotFoundError:
-                    # FormFactor data for this system is missed
+                    # OP data for this lipid is missed
                     pass
-                simulations.append(
-                    QualSimulation(system, simOPdata, simFFdata, system["path"]),
-                )
-            else:
-                print("The simulation does not have experimental data.")
-                continue
+                sim_op_data[lip_mol] = op_data
+
+            sim_ff_data = {}  # form factor data
+            filename2 = os.path.join(
+                FMDL_SIMU_PATH,
+                system["path"],
+                "FormFactor.json",
+            )
+            try:
+                with open(filename2) as json_file:
+                    sim_ff_data = json.load(json_file)
+            except FileNotFoundError:
+                # FormFactor data for this system is missed
+                pass
+            simulations.append(
+                QualSimulation(system, sim_op_data, sim_ff_data, system["path"]),
+            )
+        else:
+            print("The simulation does not have experimental data.")
 
     return simulations

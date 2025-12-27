@@ -255,9 +255,12 @@ def find_pairs(experiments: list[Experiment], simulations: list[SearchSystem]):
                         exp_total_lipid_concentration / sim_total_lipid_concentration > 1 - LIP_CONC_REL_THRESHOLD
                     ) and (exp_total_lipid_concentration / sim_total_lipid_concentration < 1 + LIP_CONC_REL_THRESHOLD):
                         switch = 1
-                elif (type(exp_total_lipid_concentration) is str) and (type(sim_total_lipid_concentration) is str):
-                    if exp_total_lipid_concentration == sim_total_lipid_concentration:
-                        switch = 1
+                elif (
+                    (type(exp_total_lipid_concentration) is str)
+                    and (type(sim_total_lipid_concentration) is str)
+                    and (exp_total_lipid_concentration == sim_total_lipid_concentration)
+                ):
+                    switch = 1
 
                 if switch:
                     # check temperature +/- 2 degrees
@@ -274,31 +277,27 @@ def find_pairs(experiments: list[Experiment], simulations: list[SearchSystem]):
 
                         # Add path to experiment into simulation README.yaml
                         # many experiment entries can match to same simulation
-                        exp_doi = experiment.readme["DOI"]
                         exp_path = os.path.relpath(
                             experiment.dataPath,
                             start=os.path.join(FMDL_EXP_PATH, experiment.exptype),
                         )
                         if experiment.exptype == "OrderParameters":
                             lipid = experiment.molname
-                            simulation.system["EXPERIMENT"]["ORDERPARAMETER"][lipid][exp_doi] = exp_path
+                            simulation.system["EXPERIMENT"]["ORDERPARAMETER"][lipid].append(exp_path)
                         elif experiment.exptype == "FormFactors":
-                            simulation.system["EXPERIMENT"]["FORMFACTOR"] = exp_path
+                            simulation.system["EXPERIMENT"]["FORMFACTOR"].append(exp_path)
                     else:
                         continue
 
         # sorting experiment lists to keep experimental order strict
         cur_exp = simulation.system["EXPERIMENT"]
+        cur_exp["FORMFACTOR"].sort()
         for _lipid in cur_exp["ORDERPARAMETER"]:
-            unsort_dict = cur_exp["ORDERPARAMETER"][_lipid].copy()
-            if not len(unsort_dict):
-                continue
-            sort_dict = dict(sorted(unsort_dict.items()))
-            cur_exp["ORDERPARAMETER"][_lipid] = sort_dict.copy()
+            cur_exp["ORDERPARAMETER"][_lipid].sort()
 
         outfile_dict = os.path.join(FMDL_SIMU_PATH, simulation.idx_path, "README.yaml")
         with open(outfile_dict, "w") as f:
-            if "path" in simulation.system.keys():
+            if "path" in simulation.system:
                 del simulation.system["path"]
             yaml.dump(simulation.system.readme, f, sort_keys=False, allow_unicode=True)
 
@@ -320,7 +319,7 @@ def log_pairs(pairs, fd: IO[str]) -> None:
         simp = sim.idx_path
 
         expp = exp.dataPath
-        expd = exp.readme["DOI"]
+        expd = exp.readme.get("ARTICLE_DOI", "[no article DOI]")
 
         fd.write(f"""
 --------------------------------------------------------------------------------
@@ -336,10 +335,8 @@ Experiment:
     \n""")
 
 
-def match_experiments():
-    """
-    Main program function. Not for exporting.
-    """
+def match_experiments() -> None:
+    """Do main program work. Not for exporting."""
     simulations = load_simulations()
 
     # clear all EXPERIMENT sections in all simulations
@@ -347,9 +344,9 @@ def match_experiments():
     for simulation in simulations:
         simulation.system["EXPERIMENT"] = {}
         simulation.system["EXPERIMENT"]["ORDERPARAMETER"] = {}
-        simulation.system["EXPERIMENT"]["FORMFACTOR"] = {}
+        simulation.system["EXPERIMENT"]["FORMFACTOR"] = []
         for lipid in simulation.get_lipids():
-            simulation.system["EXPERIMENT"]["ORDERPARAMETER"][lipid] = {}
+            simulation.system["EXPERIMENT"]["ORDERPARAMETER"][lipid] = []
 
         readme_path = os.path.join(FMDL_SIMU_PATH, simulation.idx_path, "README.yaml")
         with open(readme_path, "w") as f:
@@ -369,15 +366,6 @@ def match_experiments():
         pairs_ff = find_pairs(experiments_ff, simulations)
         logf.write("=== FF PAIRS ===\n")
         log_pairs(pairs_ff, logf)
-
-    """
-    for pair in pairsFF:
-        print('#################')
-        print(pair[0].readme)
-        print(pair[0].indexingPath)
-        print("#")
-        print(pair[1].readme)
-    """
 
     print("Found order parameter data for " + str(len(pairs_op)) + " pairs")
     print("Found form factor data for " + str(len(pairs_ff)) + " pairs")
