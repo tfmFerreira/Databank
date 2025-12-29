@@ -8,19 +8,12 @@
 FAIRMD Lipids Project
 ==========================
 
-FAIRMD Lipids is a community-driven catalogue of biologically relevant lipid membranes
-emerging from the `NMRlipids Open Collaboration <http://nmrlipids.blogspot.com/>`_. It
-gathers atomistic MD simulations, X-ray scattering experiments, and NMR experiments on
-C-H bond order parameters in one place.
+FAIRMD Lipids is a community-driven databank of biologically relevant lipid membranes emerging from the `NMRlipids Open Collaboration <http://nmrlipids.blogspot.com/>`_. The databank is an open collection of atomistic molecular dynamics (MD) simulations, comprising already a massive number of lipid membrane models generated with many different force fields (e.g. CHARMM, Amber, GROMOS and Slipids), and of lipid membrane experimental data mainly from X-ray scattering and NMR experiments. FAIRMD Lipids data can be easily accessed by the web interface `FAIRMD Lipids-webUI <https://databank.nmrlipids.fi/>`_. Programmatic access to the databank is facilitated through the FAIRMD Lipids-API which enables automatic analysis of virtually any property across all simulations in the Databank. This programmatic access makes possible a wide range of novel data-driven applications from MD model benchmarking against experimental data, to the construction of machine learning models for predicting membrane properties.      
 
+FAIRMD Lipids is an overlay databank
+----------------------------
 
-*FAIRMD Lipids is an overlay databank.* Each databank entry (molecule, simulation or
-experiment) contains the metadata YAML-file, which stores all the essential information
-for the data upcycling and reuse. This includes, for example, the information about
-permanent location of each simulation file, but raw data is located in distributed
-locations outside the FAIRMD Lipids. The organisation of the data as well as description
-of metadata schemas are described in :ref:`dbstructure`. Physically, the database is
-located in `BilayerData GitHub repository <https://github.com/NMRlipids/BilayerData>`_.
+Each databank entry (molecule, simulation or experiment) contains the metadata YAML-file, which stores all the essential information for the data upcycling and reuse. This includes, for example, the information about permanent location of each simulation file, but raw data is located in distributed locations outside the FAIRMD Lipids. The organisation of the data as well as description of metadata schemas are described in :ref:`dbstructure`. Physically, the database is located in `BilayerData GitHub repository <https://github.com/NMRlipids/BilayerData>`_.
 
 The scientific background and initial motivation of the project is described in the
 `FAIRMD Lipids Manuscript (Nat.Comm., 2024)
