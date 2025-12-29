@@ -3,9 +3,7 @@
 Getting started
 ===============
 
-The functions that help analyzing data in the FAIRMD Lipids are described here. These
-functions are located in the :mod:`fairmd.lipids` module. To get started using these
-functions, first set up the package and initialize the databank:
+A quickstart for using FAIRMD Lipids is described here. All the functions currently available to use are located in the :mod:`fairmd.lipids` module. To get started using these functions, first set up the package and initialize the databank:
 
 .. code-block:: bash
 
@@ -13,8 +11,7 @@ functions, first set up the package and initialize the databank:
    fmdl_initialize_data toy
    source databank_env.rc
 
-"Toy" is a small test databank which is useful for testing and learning the package. You
-can then start to work with the `template
+This generates a small test databank folder "ToyData" which is useful for testing and learning how to use the package. The folder contains 5 all-atom trajectories. You can then start to work with the `template
 <https://github.com/NMRLipids/databank-template/blob/main/scripts/template.ipynb>`_ or
 write a code from the scratch. The minimum python code to intialize FAIRMD Lipids is
 
