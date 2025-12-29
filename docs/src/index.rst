@@ -11,7 +11,7 @@ FAIRMD Lipids Project
 FAIRMD Lipids is a community-driven databank for exploring biologically relevant lipid membranes emerging from the `NMRlipids Open Collaboration <http://nmrlipids.blogspot.com/>`_. The databank is an open collection of atomistic molecular dynamics (MD) simulations, comprising already a massive number of lipid membrane trajectories generated using distinct force fields (e.g. CHARMM, Amber, GROMOS and Slipids), and of lipid membrane experimental data mainly from X-ray scattering and NMR experiments. The data can be easily accessed by the web graphical interface `FAIRMD Lipids-webUI <https://databank.nmrlipids.fi/>`_. The FAIRMD Lipids-API provides programmatic access to the entire data, enabling automatic analysis of all simulations in the Databank. This enables a wide range of novel data-driven applications, from MD model benchmarking against experimental data, to the construction of machine learning models that predict membrane properties.
 
 FAIRMD Lipids is an overlay databank
-==========================
+----------------------------
 
 Each databank entry (molecule, simulation or experiment) contains the metadata YAML-file, which stores all the essential information
 for the data upcycling and reuse. This includes, for example, the information about
